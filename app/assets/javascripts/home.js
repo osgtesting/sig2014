@@ -17,6 +17,7 @@ var reqArray = [
 $(function(){
   var map;
   var geocoder;
+  var locations = [];
 
   require(reqArray, function(
     Map, Geocoder,Graphic, SimpleMarkerSymbol, screenUtils,
@@ -41,17 +42,20 @@ $(function(){
       geocoder.on('select', showLocation);
 
       function showLocation(event) {
-        map.graphics.clear();
+
         var point = event.result.feature.geometry;
+        locations.push(point);
         var symbol = new SimpleMarkerSymbol()
             .setStyle("square")
             .setColor(new Color([255,0,0,0.5]));
         var graphic = new Graphic(point, symbol);
         map.graphics.add(graphic);
 
+
         map.infoWindow.setTitle("Search Result");
         map.infoWindow.setContent(event.result.name);
         map.infoWindow.show(event.result.feature.geometry);
       }
+
   });
 });
