@@ -34,6 +34,7 @@ $(function(){
         arcgisGeocoder: {
           placeholder: "Find a place"
         },
+        autoNavigate: false,
         map: map
       }, dom.byId("search"));
 
