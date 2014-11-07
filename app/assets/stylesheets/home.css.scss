@@ -18,3 +18,15 @@ html, body, #mapDiv {
   width: 200px;
   height: 35px;
 }
+
+#createRouteButton {
+  display: block;
+  position: absolute;
+  z-index: 3;
+  top: 55px;
+  left: 75px;
+  width: auto;
+  height: auto;
+  border: 1px solid #57585A;
+  border-radius: 5px;
+}

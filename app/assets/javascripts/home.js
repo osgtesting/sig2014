@@ -28,9 +28,15 @@ $(function(){
         center: [ -100, 40 ],
         zoom: 5
       });
+
+      var dotsLayer = new esri.layers.GraphicsLayer("dotsLayer");
+      dotsLayer.setInfoTemplate(new esri.InfoTemplate("${NAME}","${*}"));
+      map.addLayer(dotsLayer);
+
       // Geocoder creation
       geocoder = new Geocoder({
         autoComplete: true,
+        autoZoom: false,
         arcgisGeocoder: {
           placeholder: "Find a place"
         },
@@ -42,6 +48,9 @@ $(function(){
       geocoder.startup();
       geocoder.on('select', showLocation);
 
+      // CreateRoute button creation
+      // TO DO
+
       function showLocation(event) {
 
         var point = event.result.feature.geometry;
@@ -50,7 +59,10 @@ $(function(){
             .setStyle("square")
             .setColor(new Color([255,0,0,0.5]));
         var graphic = new Graphic(point, symbol);
-        map.graphics.add(graphic);
+        dotsLayer.add(graphic);
+
+        console.log(dotsLayer);
+          console.log(map);
 
 
         map.infoWindow.setTitle("Search Result");
