@@ -35,6 +35,8 @@ $(function(){
   var geocoder;
   var locations = [];
   var routeSymbol;
+  var ruta;
+  var polilinea;
 
   require(reqArray, function(
     esriConfig, urlUtils, Map, Geocoder,Graphic, RouteTask, RouteParameters, FeatureSet,
@@ -57,6 +59,11 @@ $(function(){
       dotsLayer.id = 'pointsLayer';
       map.addLayer(dotsLayer);
 
+      var simLayer = new esri.layers.GraphicsLayer("simLayer");
+      simLayer.setInfoTemplate(new esri.InfoTemplate("${NAME}","${*}"));
+      simLayer.id = 'simLayer';
+      map.addLayer(simLayer);
+
       // Geocoder creation
       geocoder = new Geocoder({
         autoComplete: true,
@@ -73,6 +80,8 @@ $(function(){
       geocoder.on('select', showLocation);
 
       $('#createRouteButton').bind('click', function() {bindCreateRoute()});
+
+      $('#createSimButton').bind('click', function() {bindCreateSimulation()});
 
       function showLocation(event) {
 
@@ -96,6 +105,7 @@ $(function(){
         map.graphics.add(tmp)
 
         map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+        ruta =evt.result.routeResults[0].route;
       }
 
       function bindCreateRoute() {
@@ -118,6 +128,18 @@ $(function(){
         routeTask.on("solve-complete", showRoute);
 
         routeTask.solve(routeParams);
+      }
+
+
+      function bindCreateSimulation() {
+
+          polilinea=ruta.geometry;
+
+          var symbol2 = new SimpleMarkerSymbol()
+              .setStyle("triangle")
+              .setColor(new Color([255,0,0,0.5]));
+          var graphic2 = new Graphic(polilinea.getPoint(0,0), symbol2);
+          simLayer.add(graphic2);
       }
 
   });

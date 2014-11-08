@@ -30,3 +30,15 @@ html, body, #mapDiv {
   border: 1px solid #57585A;
   border-radius: 5px;
 }
+
+#createSimButton {
+  display: block;
+  position: absolute;
+  z-index: 3;
+  top: 62px;
+  left: 200px;
+  width: auto;
+  height: auto;
+  border: 1px solid #57585A;
+  border-radius: 5px;
+}
