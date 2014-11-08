@@ -91,13 +91,13 @@ $(function(){
 
       //Adds the solved route to the map as a graphic
       function showRoute(evt) {
-        var routeLayer = new esri.layers.GraphicsLayer("dotsLayer");
-        routeLayer.graphics.push(evt.result.routeResults[0].route);
+//        var routeLayer = new esri.layers.GraphicsLayer("dotsLayer");
+//        routeLayer.graphics.push(evt.result.routeResults[0].route);
 
-        map.addLayer(routeLayer);
+//        map.addLayer(routeLayer);
 //        var tmp = evt.result.routeResults[0].route.setSymbol(routeSymbol);
-//        map.graphics.add(routeLayer);
-        console.log('fefefe');
+        map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+//        console.log('fefefe');
       }
 
       function bindCreateRoute() {
@@ -142,3 +142,25 @@ $(function(){
 //  })
 //});
 //EL TOKEN GENERADO lo obtuvimos con un $.get()
+
+
+//function showRoute(e) {
+//  console.log("El evento en showRoute: ", e);
+//  var data = [];
+//  if ( grid ) {
+//    grid.refresh();
+//  }
+//
+//  var directions = e.routeResults[0].directions;
+//  directionFeatures = directions.features;
+//  var routeSymbol = new SimpleLineSymbol().setColor(new Color([0,0,255,0.5])).setWidth(4);
+//
+//  // Zoom to results.
+//  map.setExtent(directions.mergedGeometry.getExtent(), true);
+//  // Add route to the map.
+//  var routeGraphic = new Graphic(directions.mergedGeometry, routeSymbol);
+//  map.graphics.add(routeGraphic);
+//  routeGraphic.getShape().moveToBack();
+//  map.setExtent(directions.extent, true);
+//
+//}
