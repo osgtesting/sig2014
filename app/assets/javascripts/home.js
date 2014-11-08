@@ -91,13 +91,25 @@ $(function(){
 
       //Adds the solved route to the map as a graphic
       function showRoute(evt) {
+        var tmp;
+        console.log(map.graphics.graphics.length);
+        $.each(map.graphics.graphics,function (index, value) {
+          console.log(index);
+          console.log(value);
+          if (value.geometry.type == 'points')
+            tmp = value;
+        });
+
+        map.graphics.clear();
+        if (tmp) {map.graphics.add(tmp);}
+
 //        var routeLayer = new esri.layers.GraphicsLayer("dotsLayer");
 //        routeLayer.graphics.push(evt.result.routeResults[0].route);
 
 //        map.addLayer(routeLayer);
 //        var tmp = evt.result.routeResults[0].route.setSymbol(routeSymbol);
         map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-//        console.log('fefefe');
+        console.log('fefefe');
       }
 
       function bindCreateRoute() {
