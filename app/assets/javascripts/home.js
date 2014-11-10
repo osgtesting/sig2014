@@ -7,10 +7,13 @@ var reqArray = [
   "esri/graphic",
   "esri/tasks/RouteTask",
   "esri/tasks/RouteParameters",
+  "esri/tasks/GeometryService",
+  "esri/tasks/BufferParameters",
 
   "esri/tasks/FeatureSet",
   "esri/symbols/SimpleMarkerSymbol",
   "esri/symbols/SimpleLineSymbol",
+  "esri/symbols/SimpleFillSymbol",
   "esri/geometry/screenUtils",
 
   "esri/Color",
@@ -39,9 +42,9 @@ $(function(){
   var polilinea;
 
   require(reqArray, function(
-    esriConfig, urlUtils, Map, Geocoder,Graphic, RouteTask, RouteParameters, FeatureSet,
-    SimpleMarkerSymbol, SimpleLineSymbol, screenUtils, Color, on, registry,
-    dom, domConstruct, query, Color){
+    esriConfig, urlUtils, Map, Geocoder,Graphic, RouteTask, RouteParameters, GeometryService,
+    BufferParameters, FeatureSet, SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
+    screenUtils, Color, on, registry, dom, domConstruct, query, Color){
 
       esriConfig.defaults.io.corsDetection = false;
 
@@ -96,6 +99,9 @@ $(function(){
         map.infoWindow.setTitle("Search Result");
         map.infoWindow.setContent(event.result.name);
         map.infoWindow.show(event.result.feature.geometry);
+
+        // Clear search input
+        $('#search_input')[0].value = '';
       }
 
       //Adds the solved route to the map as a graphic
@@ -132,16 +138,46 @@ $(function(){
 
 
       function bindCreateSimulation() {
+        polilinea=ruta.geometry;
 
-          polilinea=ruta.geometry;
-
-          var symbol2 = new SimpleMarkerSymbol()
-              .setStyle("triangle")
-              .setColor(new Color([255,0,0,0.5]));
-          var graphic2 = new Graphic(polilinea.getPoint(0,0), symbol2);
-          simLayer.add(graphic2);
+        var symbol2 = new SimpleMarkerSymbol()
+            .setStyle("triangle")
+            .setColor(new Color([255,0,0,0.5]));
+        var graphic2 = new Graphic(polilinea.getPoint(0,0), symbol2);
+        simLayer.add(graphic2);
+        simLayerBuffer();
       }
 
+      function simLayerBuffer() {
+        var simLayerPoint = map.getLayer('simLayer').graphics[0];
+        var gsvc = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
+        var bufferParams = new BufferParameters();
+
+
+        bufferParams.geometries = [simLayerPoint.geometry];
+        bufferParams.distances = [0.1, 10];
+        bufferParams.unit = GeometryService.UNIT_KILOMETER;
+        bufferParams.outSpatialReference = map.spatialReference;
+
+        gsvc.buffer(bufferParams, drawBuffer);
+      }
+
+      function drawBuffer(geometries) {
+        var symbol = new SimpleFillSymbol(
+            SimpleFillSymbol.STYLE_SOLID,
+            new SimpleLineSymbol(
+                SimpleLineSymbol.STYLE_SOLID,
+                new dojo.Color([0,0,255,0.65]), 2
+            ),
+            new dojo.Color([0,0,255,0.35])
+        );
+
+        dojo.forEach(geometries, function(geometry) {
+          var graphic = new esri.Graphic(geometry,symbol);
+          map.graphics.add(graphic);
+        });
+
+      };
   });
 });
 
