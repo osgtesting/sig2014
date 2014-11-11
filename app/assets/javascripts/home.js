@@ -40,6 +40,12 @@ $(function(){
   var routeSymbol;
   var ruta;
   var polilinea;
+  var totalRuta;
+  var tramo;
+  var tramoAux;
+  var int;
+  var random;
+
 
   require(reqArray, function(
     esriConfig, urlUtils, Map, Geocoder,Graphic, RouteTask, RouteParameters, GeometryService,
@@ -137,47 +143,100 @@ $(function(){
       }
 
 
-      function bindCreateSimulation() {
-        polilinea=ruta.geometry;
+    function bindCreateSimulation() {
 
-        var symbol2 = new SimpleMarkerSymbol()
-            .setStyle("triangle")
-            .setColor(new Color([255,0,0,0.5]));
-        var graphic2 = new Graphic(polilinea.getPoint(0,0), symbol2);
-        simLayer.add(graphic2);
-        simLayerBuffer();
-      }
+      polilinea = ruta.geometry;
 
-      function simLayerBuffer() {
-        var simLayerPoint = map.getLayer('simLayer').graphics[0];
-        var gsvc = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
-        var bufferParams = new BufferParameters();
+      var symbol2 = new SimpleMarkerSymbol()
+          .setStyle("triangle")
+          .setColor(new Color([255, 255, 190, 255]));
+      var graphic2 = new Graphic(polilinea.getPoint(0, 0), symbol2);
+      simLayer.add(graphic2);
+      totalRuta = polilinea.paths[0].length - 1;
+      tramoAux=0;
+      int = setInterval(Timer, 5000);
+    }
+
+    function Timer() {
+        random = (Math.random())*10;
+        console.log(random);
+        if (random <= 3) {
+
+            tramo = 30;
+            var symbol3 = new SimpleMarkerSymbol()
+                .setStyle("triangle")
+                .setColor(new Color("yellow"));
+
+        } else if (random > 3 && random < 6) {
+
+            tramo = 80;
+            var symbol3 = new SimpleMarkerSymbol()
+                .setStyle("triangle")
+                .setColor(new Color("blue"));
+        } else {
+
+            tramo = 120;
+            var symbol3 = new SimpleMarkerSymbol()
+                .setStyle("triangle")
+                .setColor(new Color("green"));
+
+        }
+        if ((tramoAux + tramo) >= totalRuta) {      /*termina*/
+
+            var symbol3 = new SimpleMarkerSymbol()
+                .setStyle("triangle")
+                .setColor(new Color("yellow"));
+            var puntoSim = polilinea.getPoint(0, totalRuta);
+            var graphic3 = new Graphic(puntoSim, symbol3);
+            simLayer.clear();
+            simLayer.add(graphic3);
+
+            clearInterval(int);
+
+        } else {
+
+            tramoAux = tramoAux + tramo;
+
+            var puntoSim = polilinea.getPoint(0, tramoAux.toFixed());
+
+            var graphic3 = new Graphic(puntoSim, symbol3);
+            simLayer.clear();
+            simLayer.add(graphic3);
+        }
+        console.log(tramo);
+        console.log(tramoAux);
+    };
+
+    function simLayerBuffer() {
+      var simLayerPoint = map.getLayer('simLayer').graphics[0];
+      var gsvc = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
+      var bufferParams = new BufferParameters();
 
 
-        bufferParams.geometries = [simLayerPoint.geometry];
-        bufferParams.distances = [0.1, 10];
-        bufferParams.unit = GeometryService.UNIT_KILOMETER;
-        bufferParams.outSpatialReference = map.spatialReference;
+      bufferParams.geometries = [simLayerPoint.geometry];
+      bufferParams.distances = [0.1, 10];
+      bufferParams.unit = GeometryService.UNIT_KILOMETER;
+      bufferParams.outSpatialReference = map.spatialReference;
 
-        gsvc.buffer(bufferParams, drawBuffer);
-      }
+      gsvc.buffer(bufferParams, drawBuffer);
+    }
 
-      function drawBuffer(geometries) {
-        var symbol = new SimpleFillSymbol(
-            SimpleFillSymbol.STYLE_SOLID,
-            new SimpleLineSymbol(
-                SimpleLineSymbol.STYLE_SOLID,
-                new dojo.Color([0,0,255,0.65]), 2
-            ),
-            new dojo.Color([0,0,255,0.35])
-        );
+    function drawBuffer(geometries) {
+      var symbol = new SimpleFillSymbol(
+          SimpleFillSymbol.STYLE_SOLID,
+          new SimpleLineSymbol(
+              SimpleLineSymbol.STYLE_SOLID,
+              new dojo.Color([0,0,255,0.65]), 2
+          ),
+          new dojo.Color([0,0,255,0.35])
+      );
 
-        dojo.forEach(geometries, function(geometry) {
-          var graphic = new esri.Graphic(geometry,symbol);
-          map.graphics.add(graphic);
-        });
+      dojo.forEach(geometries, function(geometry) {
+        var graphic = new esri.Graphic(geometry,symbol);
+        map.graphics.add(graphic);
+      });
 
-      };
+    };
   });
 });
 
