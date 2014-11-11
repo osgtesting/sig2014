@@ -152,6 +152,7 @@ $(function(){
           .setColor(new Color([255, 255, 190, 255]));
       var graphic2 = new Graphic(polilinea.getPoint(0, 0), symbol2);
       simLayer.add(graphic2);
+      simLayerBuffer()
       totalRuta = polilinea.paths[0].length - 1;
       tramoAux=0;
       int = setInterval(Timer, 5000);
@@ -190,6 +191,7 @@ $(function(){
             var graphic3 = new Graphic(puntoSim, symbol3);
             simLayer.clear();
             simLayer.add(graphic3);
+            simLayerBuffer();
 
             clearInterval(int);
 
@@ -202,6 +204,7 @@ $(function(){
             var graphic3 = new Graphic(puntoSim, symbol3);
             simLayer.clear();
             simLayer.add(graphic3);
+          simLayerBuffer();
         }
         console.log(tramo);
         console.log(tramoAux);
@@ -214,7 +217,7 @@ $(function(){
 
 
       bufferParams.geometries = [simLayerPoint.geometry];
-      bufferParams.distances = [0.1, 10];
+      bufferParams.distances = [10];
       bufferParams.unit = GeometryService.UNIT_KILOMETER;
       bufferParams.outSpatialReference = map.spatialReference;
 
@@ -233,7 +236,7 @@ $(function(){
 
       dojo.forEach(geometries, function(geometry) {
         var graphic = new esri.Graphic(geometry,symbol);
-        map.graphics.add(graphic);
+        simLayer.add(graphic);
       });
 
     };
