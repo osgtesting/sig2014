@@ -257,20 +257,12 @@ $(function(){
 
       console.log(graphics);
 
-      // Descomentar si se quieren dibujar condados
-
-  //    var infoTempContent = "POP2007 = ${POP2007}<br/>POP2000 = ${POP2000}<br/>MALES = ${MALES}<br/>FEMALES = ${FEMALES}"
-  //            + "<br/><A href='#' onclick='map.graphics.clear();map.infoWindow.hide();'>Remove Selected Features</A>";
-  //    //Create InfoTemplate for styling the result infowindow.
-  //    var infoTemplate = new esri.InfoTemplate("Block: ${FIPS}", infoTempContent);
-  //
-  //    var resultFeatures = graphics.features;
-  //    for (var i=0, il=resultFeatures.length; i<il; i++) {
-  //      var graphic = resultFeatures[i];
-  //      graphic.setSymbol(symbol);
-  //      graphic.setInfoTemplate(infoTemplate);
-  //      map.graphics.add(graphic);
-  //    }
+      var resultFeatures = graphics.features;
+      for (var i=0, il=resultFeatures.length; i<il; i++) {
+        var graphic = resultFeatures[i];
+        graphic.setSymbol(symbol);
+        simLayer.add(graphic);
+      }
     });
 
   });
