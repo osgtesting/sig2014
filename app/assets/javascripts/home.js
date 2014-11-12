@@ -53,6 +53,7 @@ $(function(){
     screenUtils, Color, on, registry, dom, domConstruct, query, Color){
 
       esriConfig.defaults.io.corsDetection = false;
+      esriConfig.defaults.io.corsEnabledServers.push("server.arcgisonline.com");
 
       // Map creation
       map = new Map("mapDiv", {
@@ -60,6 +61,15 @@ $(function(){
         center: [ -100, 40 ],
         zoom: 5
       });
+
+      // Demographic QueryTask
+      var queryTask = new esri.tasks.QueryTask("http://server.arcgisonline.com/ArcGIS/rest/services/Demographics/USA_1990-2000_Population_Change/MapServer/3");
+
+      // Demographic Query
+      var query = new esri.tasks.Query();
+      query.returnGeometry = true;
+      query.outFields = ['NAME','ST_ABBREV','TOTPOP_CY']
+      query.outSpatialReference = {"wkid":102100};
 
       routeSymbol = new SimpleLineSymbol().setColor(new dojo.Color([0, 0, 255, 0.5])).setWidth(5);
 
@@ -160,7 +170,6 @@ $(function(){
 
     function Timer() {
         random = (Math.random())*10;
-        console.log(random);
         if (random <= 3) {
 
             tramo = 30;
@@ -206,8 +215,6 @@ $(function(){
             simLayer.add(graphic3);
           simLayerBuffer();
         }
-        console.log(tramo);
-        console.log(tramoAux);
     };
 
     function simLayerBuffer() {
@@ -239,46 +246,33 @@ $(function(){
         simLayer.add(graphic);
       });
 
+      query.geometry = esri.geometry.webMercatorToGeographic(geometries[0]);
+      query.spatialRelationship = esri.tasks.Query.SPATIAL_REL_INTERSECTS;
+      queryTask.execute(query);
     };
+
+    dojo.connect(queryTask, "onComplete", function(graphics) {
+      firstGraphic = graphics.features[0];
+      var symbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new dojo.Color([100,100,100]), 3), new dojo.Color([255,0,0,0.20]));
+
+      console.log(graphics);
+
+      // Descomentar si se quieren dibujar condados
+
+  //    var infoTempContent = "POP2007 = ${POP2007}<br/>POP2000 = ${POP2000}<br/>MALES = ${MALES}<br/>FEMALES = ${FEMALES}"
+  //            + "<br/><A href='#' onclick='map.graphics.clear();map.infoWindow.hide();'>Remove Selected Features</A>";
+  //    //Create InfoTemplate for styling the result infowindow.
+  //    var infoTemplate = new esri.InfoTemplate("Block: ${FIPS}", infoTempContent);
+  //
+  //    var resultFeatures = graphics.features;
+  //    for (var i=0, il=resultFeatures.length; i<il; i++) {
+  //      var graphic = resultFeatures[i];
+  //      graphic.setSymbol(symbol);
+  //      graphic.setInfoTemplate(infoTemplate);
+  //      map.graphics.add(graphic);
+  //    }
+    });
+
   });
 });
 
-//var p = new Point(ev.feature.geometry.x,ev.feature.geometry.y,ev.feature.geometry.spatialReference);
-//console.log(p);
-//points.push(p);
-//var simpleMarkerSymbol = new SimpleMarkerSymbol();
-//var graphic = new Graphic(p, simpleMarkerSymbol);
-//
-//
-//require(["esri/IdentityManager"], function(IdentityManager) {
-//  IdentityManager.registerToken({
-//    'userId': 'TU USERID DE LA CUENTA DEL TRIAL',
-//    'expires': 7200,
-//    'server': 'http://www.arcgis.com/sharing/rest',
-//    'ssl': false,
-//    'token': EL TOKEN GENERADO,
-//  })
-//});
-//EL TOKEN GENERADO lo obtuvimos con un $.get()
-
-
-//function showRoute(e) {
-//  console.log("El evento en showRoute: ", e);
-//  var data = [];
-//  if ( grid ) {
-//    grid.refresh();
-//  }
-//
-//  var directions = e.routeResults[0].directions;
-//  directionFeatures = directions.features;
-//  var routeSymbol = new SimpleLineSymbol().setColor(new Color([0,0,255,0.5])).setWidth(4);
-//
-//  // Zoom to results.
-//  map.setExtent(directions.mergedGeometry.getExtent(), true);
-//  // Add route to the map.
-//  var routeGraphic = new Graphic(directions.mergedGeometry, routeSymbol);
-//  map.graphics.add(routeGraphic);
-//  routeGraphic.getShape().moveToBack();
-//  map.setExtent(directions.extent, true);
-//
-//}
