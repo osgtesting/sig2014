@@ -2,6 +2,7 @@ var reqArray = [
   "esri/config",
   "esri/urlUtils",
   "esri/map",
+  "esri/tasks/locator",
   "esri/dijit/Geocoder",
 
   "esri/graphic",
@@ -9,6 +10,8 @@ var reqArray = [
   "esri/tasks/RouteParameters",
   "esri/tasks/GeometryService",
   "esri/tasks/BufferParameters",
+  "esri/geometry/webMercatorUtils",
+  "esri/InfoTemplate",
 
   "esri/tasks/FeatureSet",
   "esri/symbols/SimpleMarkerSymbol",
@@ -45,11 +48,17 @@ $(function(){
   var tramoAux;
   var int;
   var random;
+  var puntoSim;
+  var location;
+  var locator;
+  var infoTemplate;
+  var symbol8;
+  var estado;
 
 
   require(reqArray, function(
-    esriConfig, urlUtils, Map, Geocoder,Graphic, RouteTask, RouteParameters, GeometryService,
-    BufferParameters, FeatureSet, SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
+    esriConfig, urlUtils, Map, Locator, Geocoder, Graphic, RouteTask, RouteParameters, GeometryService,
+    BufferParameters, webMercatorUtils, InfoTemplate, FeatureSet, SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
     screenUtils, Color, on, registry, dom, domConstruct, query, Color){
 
       esriConfig.defaults.io.corsDetection = false;
@@ -160,8 +169,9 @@ $(function(){
       var symbol2 = new SimpleMarkerSymbol()
           .setStyle("triangle")
           .setColor(new Color([255, 255, 190, 255]));
-      var graphic2 = new Graphic(polilinea.getPoint(0, 0), symbol2);
+      var graphic2 = new Graphic(polilinea.getPoint(0, 0), symbol2,new InfoTemplate("Estado", "State: ${State}"));
       simLayer.add(graphic2);
+      estado=graphic2.getContent();
       simLayerBuffer()
       totalRuta = polilinea.paths[0].length - 1;
       tramoAux=0;
@@ -196,7 +206,7 @@ $(function(){
             var symbol3 = new SimpleMarkerSymbol()
                 .setStyle("triangle")
                 .setColor(new Color("yellow"));
-            var puntoSim = polilinea.getPoint(0, totalRuta);
+            puntoSim = polilinea.getPoint(0, totalRuta);
             var graphic3 = new Graphic(puntoSim, symbol3);
             simLayer.clear();
             simLayer.add(graphic3);
@@ -208,14 +218,54 @@ $(function(){
 
             tramoAux = tramoAux + tramo;
 
-            var puntoSim = polilinea.getPoint(0, tramoAux.toFixed());
+            puntoSim = polilinea.getPoint(0, tramoAux.toFixed());
 
             var graphic3 = new Graphic(puntoSim, symbol3);
             simLayer.clear();
             simLayer.add(graphic3);
           simLayerBuffer();
+          encontrarEstado();
+
         }
     };
+
+    function encontrarEstado() {
+
+        map.infoWindow.hide();
+        symbol8 = new SimpleMarkerSymbol()
+            .setStyle("triangle")
+            .setColor(new Color([255, 255, 190, 255]));
+        infoTemplate = new InfoTemplate("Estado", "State: ${State}");
+
+        locator.locationToAddress(puntoSim, 1000);
+        console.log(puntoSim.getLatitude());
+        console.log(puntoSim.getLongitude());
+
+    }
+    locator = new Locator("http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Locators/ESRI_Geocode_USA/GeocodeServer");
+
+    locator.on("location-to-address-complete", function(evt) {
+          if (evt.address.address) {
+              var address = evt.address.address;
+              var location = webMercatorUtils.geographicToWebMercator(evt.address.location);
+              //this service returns geocoding results in geographic - convert to web mercator to display on map
+              // var location = webMercatorUtils.geographicToWebMercator(evt.location);
+              var graphic = new Graphic(location, symbol8, address, infoTemplate);
+
+
+              if (graphic.getContent()!= estado) {
+                  estado=graphic.getContent();
+                  map.infoWindow.setTitle(graphic.getTitle());
+                  map.infoWindow.setContent(graphic.getContent());
+
+                  //display the info window with the address information
+                  var screenPnt = map.toScreen(location);
+                  map.infoWindow.resize(200, 100);
+                  map.infoWindow.show(screenPnt, map.getInfoWindowAnchor(screenPnt));
+              }
+          }
+      });
+
 
     function simLayerBuffer() {
       var simLayerPoint = map.getLayer('simLayer').graphics[0];
