@@ -1,4 +1,40 @@
-<div id="search"></div>
-<button id="createRouteButton" >Crear ruta</button>
-<button id="createSimButton" >Simular ruta</button>
+<div class="controls-container">
+    <div id="search"></div>
+    <button id="create-route-button" >Crear ruta</button>
+    <button id="create-sim-button" >Simular ruta</button>
+</div>
+<button id="buffer-configuration" data-toggle="modal" data-target="#myModal">Configurar Buffer</button>
 <div id="mapDiv"></div>
+
+<div id="myModal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">Configurar Modal</h4>
+      </div>
+      <div class="modal-body">
+        <div class="form-group unit-group">
+          <label for="unit">Unidad:</label>
+          <select id="unit" name="unit">
+            <option>Kilometros</option>
+            <option>Metros</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="value">Valor:</label>
+          <input id="value-spinner" type="text" value="" name="value-spinner">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id='buffer-save' class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div
+
+
+
+
