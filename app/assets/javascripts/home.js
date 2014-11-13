@@ -19,6 +19,8 @@ var reqArray = [
   "esri/symbols/SimpleFillSymbol",
   "esri/geometry/screenUtils",
 
+  "esri/layers/FeatureLayer",
+
   "esri/Color",
   "dojo/on",
   "dijit/registry",
@@ -39,7 +41,6 @@ var reqArray = [
 $(function(){
   var map;
   var geocoder;
-  var locations = [];
   var routeSymbol;
   var ruta;
   var polilinea;
@@ -59,107 +60,153 @@ $(function(){
   require(reqArray, function(
     esriConfig, urlUtils, Map, Locator, Geocoder, Graphic, RouteTask, RouteParameters, GeometryService,
     BufferParameters, webMercatorUtils, InfoTemplate, FeatureSet, SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
-    screenUtils, Color, on, registry, dom, domConstruct, query, Color){
+    screenUtils, FeatureLayer, Color, on, registry, dom, domConstruct, query, Color){
 
-      esriConfig.defaults.io.corsDetection = false;
-      esriConfig.defaults.io.corsEnabledServers.push("server.arcgisonline.com");
+    esriConfig.defaults.io.corsDetection = false;
+    esriConfig.defaults.io.corsEnabledServers.push("server.arcgisonline.com");
 
-      // Map creation
-      map = new Map("mapDiv", {
-        basemap: "streets",
-        center: [ -100, 40 ],
-        zoom: 5
-      });
+    // Map creation
+    map = new Map("mapDiv", {
+      basemap: "streets",
+      center: [ -100, 40 ],
+      zoom: 5
+    });
 
-      // Demographic QueryTask
-      var queryTask = new esri.tasks.QueryTask("http://server.arcgisonline.com/ArcGIS/rest/services/Demographics/USA_1990-2000_Population_Change/MapServer/3");
+    // Demographic QueryTask
+    var queryTask = new esri.tasks.QueryTask("http://server.arcgisonline.com/ArcGIS/rest/services/Demographics/USA_1990-2000_Population_Change/MapServer/3");
 
-      // Demographic Query
-      var query = new esri.tasks.Query();
-      query.returnGeometry = true;
-      query.outFields = ['NAME','ST_ABBREV','TOTPOP_CY']
-      query.outSpatialReference = {"wkid":102100};
+    // Demographic Query
+    var query = new esri.tasks.Query();
+    query.returnGeometry = true;
+    query.outFields = ['NAME','ST_ABBREV','TOTPOP_CY'];
+    query.outSpatialReference = {"wkid":102100};
 
-      routeSymbol = new SimpleLineSymbol().setColor(new dojo.Color([0, 0, 255, 0.5])).setWidth(5);
+    routeSymbol = new SimpleLineSymbol().setColor(new dojo.Color([0, 0, 255, 0.5])).setWidth(5);
 
-      var dotsLayer = new esri.layers.GraphicsLayer("dotsLayer");
-      dotsLayer.setInfoTemplate(new esri.InfoTemplate("${NAME}","${*}"));
-      dotsLayer.id = 'pointsLayer';
-      map.addLayer(dotsLayer);
+    var routes_featureLayer = new FeatureLayer("http://sampleserver5.arcgisonline.com/ArcGIS/rest/services/LocalGovernment/Recreation/FeatureServer/1", {
+      mode: FeatureLayer.MODE_ONDEMAND,
+      outFields: ["*"],
+      id: "1"
 
-      var simLayer = new esri.layers.GraphicsLayer("simLayer");
-      simLayer.setInfoTemplate(new esri.InfoTemplate("${NAME}","${*}"));
-      simLayer.id = 'simLayer';
-      map.addLayer(simLayer);
+    });
 
-      // Geocoder creation
-      geocoder = new Geocoder({
-        autoComplete: true,
-        autoZoom: false,
-        arcgisGeocoder: {
-          placeholder: "Find a place"
-        },
-        autoNavigate: false,
-        map: map
-      }, dom.byId("search"));
+    routes_featureLayer.setDefinitionExpression("Notes = 'SIG-Prueba-G01'");
+    map.addLayer(routes_featureLayer);
 
-      // Geocoder activation
-      geocoder.startup();
-      geocoder.on('select', showLocation);
+    var points_featureLayer = new FeatureLayer("http://sampleserver5.arcgisonline.com/ArcGIS/rest/services/LocalGovernment/Events/FeatureServer/0", {
+      mode: FeatureLayer.MODE_ONDEMAND,
+      outFields: ["*"],
+     id: "0"
+    });
 
-      $('#createRouteButton').bind('click', function() {bindCreateRoute()});
+    points_featureLayer.setDefinitionExpression("Description = 'SIG-Prueba-G01'");
+    map.addLayer(points_featureLayer);
 
-      $('#createSimButton').bind('click', function() {bindCreateSimulation()});
+    var dotsLayer = new esri.layers.GraphicsLayer("dotsLayer");
+    dotsLayer.setInfoTemplate(new esri.InfoTemplate("${NAME}","${*}"));
+    dotsLayer.id = 'pointsLayer';
+    map.addLayer(dotsLayer);
 
-      function showLocation(event) {
+    var simLayer = new esri.layers.GraphicsLayer("simLayer");
+    simLayer.setInfoTemplate(new esri.InfoTemplate("${NAME}","${*}"));
+    simLayer.id = 'simLayer';
+    map.addLayer(simLayer);
 
-        var point = event.result.feature.geometry;
-        locations.push(point);
-        var symbol = new SimpleMarkerSymbol()
-            .setStyle("square")
-            .setColor(new Color([255,0,0,0.5]));
-        var graphic = new Graphic(point, symbol);
-        dotsLayer.add(graphic);
+    // Geocoder creation
+    geocoder = new Geocoder({
+      autoComplete: true,
+      autoZoom: false,
+      arcgisGeocoder: {
+        placeholder: "Find a place"
+      },
+      autoNavigate: false,
+      map: map
+    }, dom.byId("search"));
 
-        map.infoWindow.setTitle("Search Result");
-        map.infoWindow.setContent(event.result.name);
-        map.infoWindow.show(event.result.feature.geometry);
+    // Geocoder activation
+    geocoder.startup();
+    geocoder.on('select', showLocation);
 
-        // Clear search input
-        $('#search_input')[0].value = '';
-      }
+    $('#createRouteButton').bind('click', function() {bindCreateRoute()});
 
-      //Adds the solved route to the map as a graphic
-      function showRoute(evt) {
-        var tmp = map.graphics.graphics[0];
-        map.graphics.clear();
-        map.graphics.add(tmp)
+    $('#createSimButton').bind('click', function() {bindCreateSimulation()});
 
-        map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-        ruta =evt.result.routeResults[0].route;
-      }
+    ///////////////////////////////////////////////////////
 
-      function bindCreateRoute() {
-        routeTask = new RouteTask("http://tasks.arcgisonline.com/ArcGIS/rest/services/NetworkAnalysis/ESRI_Route_NA/NAServer/Route");
+    var evento = {};
 
+    ///////////////////////////////////////////////////////
 
-        //setup the route parameters
-        routeParams = new RouteParameters();
-        routeParams.stops = new FeatureSet();
-        routeParams.stops.features = dotsLayer.graphics;
-        routeParams.outSpatialReference = {
-          "wkid" : 102100
-        };
+    function showLocation(event) {
 
-        routeParams.findBestSequence=true;
-        routeParams.preserveFirstStop=false;
-        routeParams.preserveLastStop=false;
-        routeParams.returnStops = true;
+      var point = event.result.feature.geometry;
+      var x = point.getLatitude();
+      var y = point.getLongitude();
+      evento.features = '[{"geometry":{"x":' + y + ',"y":' + x + '},"attributes":{"OWNER":"SIG-Prueba-G01","description":"SIG-Prueba-G01","VALUE":94820.37,"APPROVED":true,"LASTUPDATE":1227663551096,"event_type":5}}]';
+      evento.gdbVersion = "";
+      evento.rollbackOnFailure = "false";
+      evento.f = "html";
 
-        routeTask.on("solve-complete", showRoute);
+      $.post("http://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Events/FeatureServer/0/addFeatures", evento);
 
-        routeTask.solve(routeParams);
-      }
+      var symbol = new SimpleMarkerSymbol()
+          .setStyle("square")
+          .setColor(new Color([255,0,0,0.5]));
+      var graphic = new Graphic(point, symbol);
+      dotsLayer.add(graphic);
+     // routeParams.stops.push(map.graphics.add(graphic));
+
+      map.infoWindow.setTitle("Search Result");
+      map.infoWindow.setContent(event.result.name);
+      map.infoWindow.show(event.result.feature.geometry);
+
+      // Clear search input
+      $('#search_input')[0].value = '';
+    }
+
+    //Adds the solved route to the map as a graphic
+    function showRoute(evt) {
+      var tmp = map.graphics.graphics[0];
+      map.graphics.clear();
+      map.graphics.add(tmp)
+
+      map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+      ruta =evt.result.routeResults[0].route;
+
+      var evento = {};
+      var feature = {};
+
+      feature.geometry =  evt.result.routeResults[0].route.setSymbol(routeSymbol).geometry;
+      feature.attributes =  {"trailtype" : 0 , "notes" : "SIG-Prueba-G01", "condition" : 0};
+
+      evento.features = JSON.stringify([feature]);
+      evento.gdbVersion = "";
+      evento.rollbackOnFailure = "false";
+      evento.f = "html";
+
+      $.post("http://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Recreation/FeatureServer/1/addFeatures", evento);
+    }
+
+    function bindCreateRoute() {
+      routeTask = new RouteTask("http://tasks.arcgisonline.com/ArcGIS/rest/services/NetworkAnalysis/ESRI_Route_NA/NAServer/Route");
+
+      //setup the route parameters
+      routeParams = new RouteParameters();
+      routeParams.stops = new FeatureSet();
+      routeParams.stops.features = dotsLayer.graphics;
+      routeParams.outSpatialReference = {
+        "wkid" : 102100
+      };
+
+      routeParams.findBestSequence=true;
+      routeParams.preserveFirstStop=true;
+      routeParams.preserveLastStop=false;
+      routeParams.returnStops = true;
+
+      routeTask.on("solve-complete", showRoute);
+
+      routeTask.solve(routeParams);
+    }
 
 
     function bindCreateSimulation() {
@@ -238,8 +285,8 @@ $(function(){
         infoTemplate = new InfoTemplate("Estado", "State: ${State}");
 
         locator.locationToAddress(puntoSim, 1000);
-        console.log(puntoSim.getLatitude());
-        console.log(puntoSim.getLongitude());
+//        console.log(puntoSim.getLatitude());
+//        console.log(puntoSim.getLongitude());
 
     }
     locator = new Locator("http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Locators/ESRI_Geocode_USA/GeocodeServer");
@@ -305,7 +352,7 @@ $(function(){
       firstGraphic = graphics.features[0];
       var symbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new dojo.Color([100,100,100]), 3), new dojo.Color([255,0,0,0.20]));
 
-      console.log(graphics);
+//      console.log(graphics);
 
       var resultFeatures = graphics.features;
       for (var i=0, il=resultFeatures.length; i<il; i++) {
